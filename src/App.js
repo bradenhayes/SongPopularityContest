@@ -5,7 +5,6 @@ import hash from "./hash";
 import Player from "./Player";
 import "./App.css";
 import concert from "./images/liveMusic.jpg";
-import logo from "./images/spotify.jpg";
 import endConcert from "./images/endImage.jpg";
 
 class App extends Component {
@@ -21,7 +20,6 @@ class App extends Component {
       song2Album: "",
       song1Popularity: "",
       song2Popularity: "",
-      progress_ms: 0,
       no_data: false,
       score: 0,
       highScore: 0,
@@ -34,8 +32,6 @@ class App extends Component {
   }
 
   componentDidMount() {
-    // Set token
-
     localStorage.setItem("highScore", 0);
     this.setState({ highScore: localStorage.getItem("highScore") });
     sessionStorage.setItem("offset", 0);
@@ -50,11 +46,8 @@ class App extends Component {
     }
   }
 
-  newSongs() {
-    // Make a call using the token
-
+  gettingSongs = () => {
     let offset = sessionStorage.getItem("offset");
-
     $.ajax({
       url: `https://api.spotify.com/v1/me/tracks?offset=${offset}&limit=50`,
       type: "GET",
@@ -112,70 +105,13 @@ class App extends Component {
         this.setState({ song2Popularity: secondSongPopularity });
       },
     });
-  }
+  };
+
   newGame = () => {
     this.setState({ score: 0 });
-    // Make a call using the token
 
-    let offset = sessionStorage.getItem("offset");
+    this.gettingSongs();
 
-    $.ajax({
-      url: `https://api.spotify.com/v1/me/tracks?offset=${offset}&limit=50`,
-      type: "GET",
-      beforeSend: (xhr) => {
-        xhr.setRequestHeader("Authorization", "Bearer " + this.state.token);
-      },
-      success: (data) => {
-        // Checks if the data is not empty
-        if (!data) {
-          this.setState({
-            no_data: true,
-          });
-          return;
-        }
-        sessionStorage.setItem(
-          "offset",
-          Math.floor(Math.random() * data.total) - 50
-        );
-
-        let firstSongName = "";
-        let secondSongName = "";
-        let firstSongArtist = "";
-        let secondSongArtist = "";
-        let firstSongAlbum = "";
-        let secondSongAlbum = "";
-        let firstSongPopularity = "";
-        let secondSongPopularity = "";
-        while (firstSongName == secondSongName) {
-          let randomIndex1 = data.items[Math.floor(Math.random() * 50)];
-          let randomIndex2 = data.items[Math.floor(Math.random() * 50)];
-          firstSongName = randomIndex1.track.name;
-          secondSongName = randomIndex2.track.name;
-          firstSongArtist = randomIndex1.track.artists[0].name;
-          secondSongArtist = randomIndex2.track.artists[0].name;
-          firstSongAlbum = randomIndex1.track.album.images[0].url;
-          secondSongAlbum = randomIndex2.track.album.images[0].url;
-          firstSongPopularity = randomIndex1.track.popularity;
-          secondSongPopularity = randomIndex2.track.popularity;
-        }
-        this.setState({
-          song1Name: firstSongName,
-        });
-        this.setState({
-          song2Name: secondSongName,
-        });
-        this.setState({ song1Artist: firstSongArtist });
-        this.setState({ song2Artist: secondSongArtist });
-        this.setState({
-          song1Album: firstSongAlbum,
-        });
-        this.setState({
-          song2Album: secondSongAlbum,
-        });
-        this.setState({ song1Popularity: firstSongPopularity });
-        this.setState({ song2Popularity: secondSongPopularity });
-      },
-    });
     setTimeout(() => {
       this.setState({ endGame: false });
     }, 200);
@@ -193,7 +129,7 @@ class App extends Component {
         this.setState({ checkMark1: false });
         this.setState({ correct1: false });
 
-        this.newSongs();
+        this.gettingSongs();
       }, 2000);
     } else if (this.state.song1Popularity < this.state.song2Popularity) {
       this.setState({ song1Name: "You are" });
@@ -212,7 +148,7 @@ class App extends Component {
       setTimeout(() => {
         this.setState({ checkMark1: false });
         this.setState({ correct1: false });
-        this.newSongs();
+        this.gettingSongs();
       }, 2000);
     }
   };
@@ -229,8 +165,6 @@ class App extends Component {
         this.newSongs();
       }, 2000);
     } else if (this.state.song1Popularity > this.state.song2Popularity) {
-      this.setState({ song2Name: "You are" });
-      this.setState({ song2Artist: "WRONG!" });
       this.setState({ endGame: true });
 
       if (this.state.score > localStorage.getItem("highScore")) {
@@ -251,67 +185,9 @@ class App extends Component {
     }
   };
 
-  getSongs(token) {
+  getSongs() {
     // Make a call using the token
-    let offset = sessionStorage.getItem("offset");
-    $.ajax({
-      url: `https://api.spotify.com/v1/me/tracks?offset=${offset}&limit=50`,
-      type: "GET",
-      beforeSend: (xhr) => {
-        xhr.setRequestHeader("Authorization", "Bearer " + token);
-      },
-      success: (data) => {
-        // Checks if the data is not empty
-        console.log(data);
-        if (!data) {
-          this.setState({
-            no_data: true,
-          });
-          return;
-        }
-        sessionStorage.setItem(
-          "offset",
-          Math.floor(Math.random() * data.total) - 50
-        );
-
-        let firstSongName = "";
-        let secondSongName = "";
-        let firstSongArtist = "";
-        let secondSongArtist = "";
-        let firstSongAlbum = "";
-        let secondSongAlbum = "";
-        let firstSongPopularity = "";
-        let secondSongPopularity = "";
-        while (firstSongName == secondSongName) {
-          let randomIndex1 = data.items[Math.floor(Math.random() * 50)];
-          let randomIndex2 = data.items[Math.floor(Math.random() * 50)];
-          firstSongName = randomIndex1.track.name;
-          secondSongName = randomIndex2.track.name;
-          firstSongArtist = randomIndex1.track.artists[0].name;
-          secondSongArtist = randomIndex2.track.artists[0].name;
-          firstSongAlbum = randomIndex1.track.album.images[0].url;
-          secondSongAlbum = randomIndex2.track.album.images[0].url;
-          firstSongPopularity = randomIndex1.track.popularity;
-          secondSongPopularity = randomIndex2.track.popularity;
-        }
-        this.setState({
-          song1Name: firstSongName,
-        });
-        this.setState({
-          song2Name: secondSongName,
-        });
-        this.setState({ song1Artist: firstSongArtist });
-        this.setState({ song2Artist: secondSongArtist });
-        this.setState({
-          song1Album: firstSongAlbum,
-        });
-        this.setState({
-          song2Album: secondSongAlbum,
-        });
-        this.setState({ song1Popularity: firstSongPopularity });
-        this.setState({ song2Popularity: secondSongPopularity });
-      },
-    });
+    this.gettingSongs();
   }
 
   render() {
