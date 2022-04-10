@@ -132,8 +132,6 @@ class App extends Component {
         this.gettingSongs();
       }, 2000);
     } else if (this.state.song1Popularity < this.state.song2Popularity) {
-      this.setState({ song1Name: "You are" });
-      this.setState({ song1Artist: "WRONG!!" });
       this.setState({ endGame: true });
 
       if (this.state.score > localStorage.getItem("highScore")) {
@@ -162,7 +160,7 @@ class App extends Component {
       setTimeout(() => {
         this.setState({ checkMark2: false });
         this.setState({ correct2: false });
-        this.newSongs();
+        this.gettingSongs();
       }, 2000);
     } else if (this.state.song1Popularity > this.state.song2Popularity) {
       this.setState({ endGame: true });
@@ -180,14 +178,72 @@ class App extends Component {
       setTimeout(() => {
         this.setState({ checkMark2: false });
         this.setState({ correct2: false });
-        this.newSongs();
+        this.gettingSongs();
       }, 2000);
     }
   };
 
-  getSongs() {
+  getSongs(token) {
     // Make a call using the token
-    this.gettingSongs();
+    let offset = sessionStorage.getItem("offset");
+    $.ajax({
+      url: `https://api.spotify.com/v1/me/tracks?offset=${offset}&limit=50`,
+      type: "GET",
+      beforeSend: (xhr) => {
+        xhr.setRequestHeader("Authorization", "Bearer " + token);
+      },
+      success: (data) => {
+        // Checks if the data is not empty
+        if (!data) {
+          this.setState({
+            no_data: true,
+          });
+          return;
+        }
+        console.log(data);
+        sessionStorage.setItem(
+          "offset",
+          Math.floor(Math.random() * data.total) - 50
+        );
+
+        let firstSongName = "";
+        let secondSongName = "";
+        let firstSongArtist = "";
+        let secondSongArtist = "";
+        let firstSongAlbum = "";
+        let secondSongAlbum = "";
+        let firstSongPopularity = "";
+        let secondSongPopularity = "";
+        while (firstSongName == secondSongName) {
+          let randomIndex1 = data.items[Math.floor(Math.random() * 50)];
+          let randomIndex2 = data.items[Math.floor(Math.random() * 50)];
+          firstSongName = randomIndex1.track.name;
+          secondSongName = randomIndex2.track.name;
+          firstSongArtist = randomIndex1.track.artists[0].name;
+          secondSongArtist = randomIndex2.track.artists[0].name;
+          firstSongAlbum = randomIndex1.track.album.images[0].url;
+          secondSongAlbum = randomIndex2.track.album.images[0].url;
+          firstSongPopularity = randomIndex1.track.popularity;
+          secondSongPopularity = randomIndex2.track.popularity;
+        }
+        this.setState({
+          song1Name: firstSongName,
+        });
+        this.setState({
+          song2Name: secondSongName,
+        });
+        this.setState({ song1Artist: firstSongArtist });
+        this.setState({ song2Artist: secondSongArtist });
+        this.setState({
+          song1Album: firstSongAlbum,
+        });
+        this.setState({
+          song2Album: secondSongAlbum,
+        });
+        this.setState({ song1Popularity: firstSongPopularity });
+        this.setState({ song2Popularity: secondSongPopularity });
+      },
+    });
   }
 
   render() {
@@ -228,7 +284,7 @@ class App extends Component {
                   }}
                 >
                   {" "}
-                  How this game works is it will ask permission to acess your
+                  How this game works is it will ask permission to access your
                   saved songs. This is all done through the Spotify API so I do
                   not actually see any credentials or anything. Once you allow
                   this game to see your saved songs, it will query and randomly
